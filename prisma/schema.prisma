@@ -30,3 +30,18 @@ model Article {
 
   @@map("articles")
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  profile  Profile?
+}
+
+model Profile {
+  id     Int    @id @default(autoincrement())
+  name   String
+  address String
+  phone  String
+  userId Int    @unique
+  user   User   @relation(fields: [userId], references: [id])
+}

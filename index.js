@@ -106,6 +106,74 @@ app.delete("/articles/:ids", async(req, res) => {
     }
 });
 
+app.post("/users", async(req, res) => {
+    const users = req.body;
+    const data = Array.isArray(users) ? users : [users];
+
+    try {
+        const newUsers = await prisma.user.createMany({
+            data
+        });
+        res.status(201).json(newUsers);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to create user" });
+    }
+});
+
+app.get("/users", async(req, res) => {
+    try {
+        const users = await prisma.user.findMany();
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch users" });
+    }
+});
+
+app.get("/user/:id", async(req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: parseInt(id) },
+            include: { profile: true }
+        });
+        if (user) {
+            res.status(200).json(user);
+        } else {
+            res.status(404).json({ error: "User not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch user" });
+    }
+});
+
+app.post("/user/:id/profile", async(req, res) => {
+    const { id } = req.params;
+    const profileData = req.body;
+    try {
+        const profile = await prisma.profile.create({
+            data: {
+                ...profileData,
+                userId: parseInt(id)
+            }
+        });
+        res.status(201).json(profile);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to create profile" });
+    }
+});
+
+app.get("/user/:id/profiles", async(req, res) => {
+    const { id } = req.params;
+    try {
+        const profiles = await prisma.profile.findMany({
+            where: { userId: parseInt(id) }
+        });
+        res.status(200).json(profiles);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch profiles" });
+    }
+});
+
 app.listen(3000, () => {
     console.log("Server is running on http://localhost:3000");
 });
