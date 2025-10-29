@@ -31,7 +31,15 @@ app.post("/articles", async(req, res) => {
 
 app.get("/articles", async(req, res) => {
     try {
-        const articles = await prisma.article.findMany();
+        const articles = await prisma.article.findMany({
+            include: {
+                user: {
+                    include: {
+                        profile: true
+                    }
+                }
+            }
+        });
         res.status(200).json(articles);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch articles" });
@@ -175,25 +183,30 @@ app.get("/user/:id/profiles", async(req, res) => {
 });
 
 app.post("/user/:id/articles", async(req, res) => {
-    const { id } = req.params;
     const articles = req.body;
     const data = Array.isArray(articles) ? articles : [articles];
-    const userId = parseInt(id);
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    try {
+        const user = await prisma.user.findUniqueOrThrow({ where: { id: parseInt(req.params.id) } });
+        const newArticles = await prisma.article.createMany({
+            data: data.map(article => ({...article, userId: user.id }))
+        });
 
-    if (!user) {
-        return res.status(404).json({ error: "User not found" });
-    } else {
-        try {
-            const newArticles = await prisma.article.createMany({
-                data: data.map(article => ({...article, userId: userId }))
-            });
+        res.status(201).json(newArticles);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to create articles for user" });
+    }
+});
 
-            res.status(201).json(newArticles);
-        } catch (error) {
-            res.status(500).json({ error: "Failed to create articles for user" });
-        }
+app.get("/user/:id/articles", async(req, res) => {
+    try {
+        const user = await prisma.user.findUniqueOrThrow({ where: { id: parseInt(req.params.id) } });
+        const articles = await prisma.article.findMany({
+            where: { userId: user.id }
+        });
+        res.status(200).json(articles);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch user's articles" });
     }
 });
 
