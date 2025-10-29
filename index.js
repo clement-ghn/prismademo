@@ -174,6 +174,29 @@ app.get("/user/:id/profiles", async(req, res) => {
     }
 });
 
+app.post("/user/:id/articles", async(req, res) => {
+    const { id } = req.params;
+    const articles = req.body;
+    const data = Array.isArray(articles) ? articles : [articles];
+    const userId = parseInt(id);
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+        return res.status(404).json({ error: "User not found" });
+    } else {
+        try {
+            const newArticles = await prisma.article.createMany({
+                data: data.map(article => ({...article, userId: userId }))
+            });
+
+            res.status(201).json(newArticles);
+        } catch (error) {
+            res.status(500).json({ error: "Failed to create articles for user" });
+        }
+    }
+});
+
 app.listen(3000, () => {
     console.log("Server is running on http://localhost:3000");
 });

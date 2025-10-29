@@ -27,6 +27,8 @@ model Article {
   state     ArticleState @default(DRAFT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  userId Int
+  user  User   @relation(fields: [userId], references: [id])
 
   @@map("articles")
 }
@@ -35,6 +37,7 @@ model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   profile  Profile?
+  articles  Article[]
 }
 
 model Profile {
