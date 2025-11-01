@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-}
+  }
 
 
 datasource db {
@@ -38,6 +38,7 @@ model User {
   email     String   @unique
   profile  Profile?
   articles  Article[]
+  carts     Cart[]
 }
 
 model Profile {
@@ -47,4 +48,27 @@ model Profile {
   phone  String
   userId Int    @unique
   user   User   @relation(fields: [userId], references: [id])
+}
+
+model Product{
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  tags      Tag[]
+  carts     Cart[]
+}
+
+model Tag {
+  id        Int      @id @default(autoincrement())
+  name      String
+  products  Product[]
+} 
+
+model Cart{
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  productId Int
+  product Product @relation(fields: [productId], references: [id])
+  quantity Int
 }
